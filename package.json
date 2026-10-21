@@ -1,0 +1,36 @@
+{
+  "name": "blockchain-crypto-demo",
+  "version": "1.0.0",
+  "description": "Web-Based Demonstrator for Blockchain Cryptographic Primitives: Hashing, Digital Signatures, and Merkle Trees",
+  "main": "server/app.js",
+  "scripts": {
+    "start": "node server/app.js",
+    "dev": "node server/app.js",
+    "init-db": "node server/database/init.js",
+    "test": "node tests/run-tests.js"
+  },
+  "keywords": [
+    "blockchain",
+    "cryptography",
+    "sha256",
+    "keccak256",
+    "ecdsa",
+    "merkle-tree",
+    "education"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "sql.js": "^1.10.2",
+    "bcryptjs": "^2.4.3",
+    "express-session": "^1.17.3",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "js-sha3": "^0.9.3",
+    "elliptic": "^6.5.4",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {}
+}
