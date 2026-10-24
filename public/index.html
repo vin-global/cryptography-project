@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BlockchainCrypto Demo - Interactive Web-Based Demonstrator for Blockchain Cryptographic Primitives: SHA-256, Keccak-256 Hashing, ECDSA Digital Signatures, and Merkle Trees">
+  <title>BlockchainCrypto Demo</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- D3.js -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <!-- elliptic.js (browser bundle) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
+
+  <!-- js-sha3 (browser bundle for Keccak-256) -->
+  <script src="https://cdn.jsdelivr.net/npm/js-sha3@0.9.3/src/sha3.min.js"></script>
+
+  <!-- Application CSS -->
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="sidebar" style="display:none;">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fas fa-cubes"></i>
+          <span>BlockchainCrypto</span>
+        </div>
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+
+      <!-- Clickable user avatar → Profile page -->
+      <div class="sidebar-user" id="sidebar-user" style="display:none;">
+        <a href="#profile" class="user-profile-link" title="View profile">
+          <div class="user-avatar"><i class="fas fa-user-circle"></i></div>
+          <span class="user-name" id="sidebar-username"></span>
+        </a>
+      </div>
+
+      <ul class="nav-menu" id="nav-menu">
+        <li class="nav-item" data-page="hashing">
+          <a href="#hashing"><i class="fas fa-hashtag"></i><span>Hashing</span></a>
+        </li>
+        <li class="nav-item" data-page="signing">
+          <a href="#signing"><i class="fas fa-signature"></i><span>Digital Signatures</span></a>
+        </li>
+        <li class="nav-item" data-page="merkle">
+          <a href="#merkle"><i class="fas fa-project-diagram"></i><span>Merkle Trees</span></a>
+        </li>
+        <li class="nav-item" data-page="blockchain">
+          <a href="#blockchain"><i class="fas fa-link"></i><span>Blockchain</span></a>
+        </li>
+        <li class="nav-item" data-page="dashboard">
+          <a href="#dashboard"><i class="fas fa-chart-bar"></i><span>Dashboard</span></a>
+        </li>
+        <li class="nav-item" data-page="profile">
+          <a href="#profile"><i class="fas fa-user-cog"></i><span>My Profile</span></a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-logout">
+          <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+
+      <!-- ═══ AUTH PAGE ═══ -->
+      <div id="auth-page" class="page auth-page">
+        <div class="auth-container">
+          <div class="auth-card">
+            <div class="auth-logo">
+              <i class="fas fa-cubes"></i>
+              <h1>BlockchainCrypto Demo</h1>
+              <p class="auth-subtitle">Interactive Demonstrator for Blockchain Cryptographic Primitives</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+              <h2>Sign In</h2>
+              <div class="form-group">
+                <label for="login-username"><i class="fas fa-user"></i> Username</label>
+                <input type="text" id="login-username" placeholder="Enter username" required autocomplete="username">
+              </div>
+              <div class="form-group">
+                <label for="login-password"><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="login-password" placeholder="Enter password" required autocomplete="current-password">
+              </div>
+              <div id="login-error" class="form-error"></div>
+              <button type="submit" class="btn btn-primary btn-block" id="login-submit">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+              </button>
+              <p class="auth-switch">Don't have an account? <a href="#" id="show-register">Create one</a></p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form" style="display:none;">
+              <h2>Create Account</h2>
+              <div class="form-group">
+                <label for="reg-username"><i class="fas fa-user"></i> Username</label>
+                <input type="text" id="reg-username" placeholder="3-30 characters, letters/numbers/underscores" required>
+              </div>
+              <div class="form-group">
+                <label for="reg-email"><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" id="reg-email" placeholder="your@email.com" required>
+              </div>
+              <div class="form-group">
+                <label for="reg-password"><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="reg-password" placeholder="Minimum 8 characters" required>
+              </div>
+              <div class="form-group">
+                <label for="reg-confirm"><i class="fas fa-lock"></i> Confirm Password</label>
+                <input type="password" id="reg-confirm" placeholder="Repeat password" required>
+              </div>
+              <div id="register-error" class="form-error"></div>
+              <button type="submit" class="btn btn-primary btn-block" id="register-submit">
+                <i class="fas fa-user-plus"></i> Create Account
+              </button>
+              <p class="auth-switch">Already have an account? <a href="#" id="show-login">Sign in</a></p>
+            </form>
+          </div>
+
+          <div class="auth-info">
+            <h3><i class="fas fa-info-circle"></i> Educational Simulation</h3>
+            <p>This application demonstrates core blockchain cryptographic concepts including SHA-256 &amp; Keccak-256 hashing, ECDSA digital signatures on secp256k1, and Merkle tree construction. It is designed for educational purposes and is <strong>not</strong> a production cryptocurrency system.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ HASHING PAGE ═══ -->
+      <div id="hashing-page" class="page" style="display:none;">
+        <div class="page-header">
+          <h1><i class="fas fa-hashtag"></i> Cryptographic Hashing</h1>
+          <p class="page-description">Compare SHA-256 and Keccak-256 (Ethereum) hash functions in real time. Even a single character change produces a completely different hash — this is the <strong>avalanche effect</strong>.</p>
+        </div>
+
+        <div class="info-banner">
+          <h4><i class="fas fa-lightbulb"></i> Understanding the Algorithms</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>SHA-256</strong> is part of the SHA-2 family designed by the NSA. Bitcoin uses SHA-256 for block hashing, proof-of-work, and Merkle trees. It produces a 256-bit (64 hex character) digest.
+            </div>
+            <div class="info-item">
+              <strong>Keccak-256</strong> is the original Keccak submission that Ethereum uses. It is <em>not</em> the same as NIST's standardized SHA3-256 — Ethereum adopted Keccak before NIST finalized SHA-3. The hex output is also 64 characters.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-keyboard"></i> Input</h3>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-outline" id="hash-sample-btn"><i class="fas fa-magic"></i> Sample Text</button>
+              <button class="btn btn-sm btn-outline" id="hash-clear-btn"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+          </div>
+          <textarea id="hash-input" class="hash-input" placeholder="Type or paste any text here to see its cryptographic hashes..." rows="4"></textarea>
+          <div class="input-meta">
+            <span id="hash-input-length">0 characters</span>
+            <span id="hash-input-bytes">0 bytes</span>
+          </div>
+        </div>
+
+        <div class="hash-results-grid">
+          <!-- SHA-256 Result -->
+          <div class="card hash-result-card">
+            <div class="card-header">
+              <h3><i class="fas fa-shield-alt"></i> SHA-256</h3>
+              <span class="badge badge-blue">Bitcoin</span>
+            </div>
+            <div class="hash-output-wrap">
+              <code id="sha256-output" class="hash-output">Enter text above to compute hash...</code>
+              <button class="btn-icon copy-btn" data-target="sha256-output" title="Copy hash"><i class="fas fa-copy"></i></button>
+            </div>
+            <div class="hash-meta">
+              <span><i class="fas fa-ruler"></i> Output: <strong id="sha256-length">—</strong></span>
+              <span><i class="fas fa-clock"></i> Time: <strong id="sha256-time">—</strong></span>
+            </div>
+          </div>
+
+          <!-- Keccak-256 Result -->
+          <div class="card hash-result-card">
+            <div class="card-header">
+              <h3><i class="fab fa-ethereum"></i> Keccak-256</h3>
+              <span class="badge badge-purple">Ethereum</span>
+            </div>
+            <div class="hash-output-wrap">
+              <code id="keccak256-output" class="hash-output">Enter text above to compute hash...</code>
+              <button class="btn-icon copy-btn" data-target="keccak256-output" title="Copy hash"><i class="fas fa-copy"></i></button>
+            </div>
+            <div class="hash-meta">
+              <span><i class="fas fa-ruler"></i> Output: <strong id="keccak256-length">—</strong></span>
+              <span><i class="fas fa-clock"></i> Time: <strong id="keccak256-time">—</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SIGNING PAGE ═══ -->
+      <div id="signing-page" class="page" style="display:none;">
+        <div class="page-header">
+          <h1><i class="fas fa-signature"></i> ECDSA Digital Signatures</h1>
+          <p class="page-description">Generate key pairs, sign transactions, and verify signatures using ECDSA on the <strong>secp256k1</strong> curve — the same curve used by Bitcoin and Ethereum.</p>
+        </div>
+
+        <div class="info-banner warning">
+          <h4><i class="fas fa-exclamation-triangle"></i> Security Notice</h4>
+          <p>Private keys are generated and used <strong>exclusively in your browser</strong>. They are never transmitted to the server. This is an educational demonstration — <strong>do not</strong> use these keys for real cryptocurrency transactions.</p>
+        </div>
+
+        <!-- Step indicators -->
+        <div class="steps-indicator">
+          <div class="step active" data-step="1">
+            <div class="step-number">1</div>
+            <div class="step-label">Key Generation</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" data-step="2">
+            <div class="step-number">2</div>
+            <div class="step-label">Transaction Signing</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" data-step="3">
+            <div class="step-number">3</div>
+            <div class="step-label">Verification</div>
+          </div>
+        </div>
+
+        <!-- Step 1: Key Generation -->
+        <div id="sign-step-1" class="sign-step">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-key"></i> Step 1: Generate ECDSA Key Pair</h3>
+            </div>
+            <div class="card-body">
+              <p>Generate a new secp256k1 key pair. The private key signs transactions; the public key verifies signatures.</p>
+
+              <div class="info-banner info-sm">
+                <p><i class="fas fa-info-circle"></i> <strong>Nonce Safety:</strong> ECDSA requires a unique random nonce (k) for every signature. The <code>elliptic.js</code> library uses RFC 6979 deterministic nonce generation, safely deriving k from the message and private key — eliminating nonce reuse risk.</p>
+              </div>
+
+              <button class="btn btn-primary" id="generate-keys-btn">
+                <i class="fas fa-key"></i> Generate Key Pair
+              </button>
+
+              <div id="keys-display" style="display:none;" class="keys-display">
+                <div class="key-field">
+                  <label><i class="fas fa-globe"></i> Public Key (shared freely)</label>
+                  <div class="hash-output-wrap">
+                    <code id="public-key-display" class="hash-output"></code>
+                    <button class="btn-icon copy-btn" data-target="public-key-display" title="Copy"><i class="fas fa-copy"></i></button>
+                  </div>
+                </div>
+
+                <div class="key-field private-key-field">
+                  <label><i class="fas fa-user-secret"></i> Private Key (keep secret!)</label>
+                  <div class="private-key-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>This private key is shown <strong>once</strong> for educational purposes only. Never expose real private keys.</span>
+                  </div>
+                  <div class="hash-output-wrap">
+                    <code id="private-key-display" class="hash-output blurred" data-revealed="false"></code>
+                    <button class="btn-icon" id="reveal-private-key" title="Reveal/hide private key"><i class="fas fa-eye"></i></button>
+                    <button class="btn-icon copy-btn" data-target="private-key-display" title="Copy"><i class="fas fa-copy"></i></button>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" id="proceed-to-sign-btn">
+                  <i class="fas fa-arrow-right"></i> Proceed to Sign Transaction
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Transaction Signing -->
+        <div id="sign-step-2" class="sign-step" style="display:none;">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-file-signature"></i> Step 2: Create &amp; Sign Transaction</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="tx-sender"><i class="fas fa-user"></i> Sender Address</label>
+                  <input type="text" id="tx-sender" placeholder="e.g., Alice" required>
+                </div>
+                <div class="form-group">
+                  <label for="tx-recipient"><i class="fas fa-user-friends"></i> Recipient Address</label>
+                  <input type="text" id="tx-recipient" placeholder="e.g., Bob" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="tx-amount"><i class="fas fa-coins"></i> Amount</label>
+                  <input type="number" id="tx-amount" placeholder="e.g., 10.5" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label for="tx-data"><i class="fas fa-sticky-note"></i> Additional Data (optional)</label>
+                  <input type="text" id="tx-data" placeholder="e.g., Payment for services">
+                </div>
+              </div>
+
+              <button class="btn btn-primary" id="sign-tx-btn">
+                <i class="fas fa-pen-nib"></i> Sign Transaction
+              </button>
+
+              <div id="signature-display" style="display:none;" class="signature-display">
+                <h4><i class="fas fa-check-circle"></i> Transaction Signed Successfully</h4>
+
+                <div class="sig-field">
+                  <label>Transaction Hash (SHA-256)</label>
+                  <div class="hash-output-wrap">
+                    <code id="tx-hash-display" class="hash-output"></code>
+                    <button class="btn-icon copy-btn" data-target="tx-hash-display" title="Copy"><i class="fas fa-copy"></i></button>
+                  </div>
+                </div>
+
+                <div class="sig-fields-row">
+                  <div class="sig-field">
+                    <label>Signature Component <strong>r</strong></label>
+                    <code id="sig-r-display" class="hash-output small"></code>
+                  </div>
+                  <div class="sig-field">
+                    <label>Signature Component <strong>s</strong></label>
+                    <code id="sig-s-display" class="hash-output small"></code>
+                  </div>
+                </div>
+
+                <div class="sig-field">
+                  <label><i class="fas fa-clock"></i> Signing Time</label>
+                  <span id="sign-time-display" class="metric-value"></span>
+                </div>
+
+                <button class="btn btn-primary" id="proceed-to-verify-btn">
+                  <i class="fas fa-arrow-right"></i> Proceed to Verify
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Verification -->
+        <div id="sign-step-3" class="sign-step" style="display:none;">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-check-double"></i> Step 3: Verify Signature</h3>
+            </div>
+            <div class="card-body">
+              <p>Verify the signature against the original transaction data and public key. You can also modify the transaction to see that verification fails when data changes.</p>
+
+              <div class="form-group">
+                <label for="verify-tx-data"><i class="fas fa-edit"></i> Transaction Data (editable for tamper testing)</label>
+                <textarea id="verify-tx-data" class="hash-input" rows="3"></textarea>
+              </div>
+
+              <div class="btn-group">
+                <button class="btn btn-primary" id="verify-btn">
+                  <i class="fas fa-check"></i> Verify Signature
+                </button>
+                <button class="btn btn-outline" id="tamper-verify-btn">
+                  <i class="fas fa-bug"></i> Tamper &amp; Verify
+                </button>
+                <button class="btn btn-outline" id="restart-signing-btn">
+                  <i class="fas fa-redo"></i> Start Over
+                </button>
+              </div>
+
+              <div id="verify-result" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ MERKLE TREE PAGE ═══ -->
+      <div id="merkle-page" class="page" style="display:none;">
+        <div class="page-header">
+          <h1><i class="fas fa-project-diagram"></i> Merkle Tree Construction</h1>
+          <p class="page-description">Build and visualize a binary Merkle tree. Transactions are hashed into leaf nodes and paired recursively until a single <strong>Merkle root</strong> is computed. Click any leaf to generate its <strong>Merkle proof</strong>.</p>
+        </div>
+
+        <div class="info-banner">
+          <h4><i class="fas fa-lightbulb"></i> Why Merkle Trees?</h4>
+          <p>Merkle trees allow efficient verification of transaction inclusion in a block without downloading the entire block. A Merkle proof requires only <strong>O(log n)</strong> hashes, making them essential for lightweight (SPV) blockchain clients.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-list"></i> Transactions</h3>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-outline" id="merkle-sample-btn"><i class="fas fa-magic"></i> Load Samples</button>
+              <button class="btn btn-sm btn-outline" id="merkle-add-btn"><i class="fas fa-plus"></i> Add Transaction</button>
+              <button class="btn btn-sm btn-outline" id="merkle-reset-btn"><i class="fas fa-eraser"></i> Reset</button>
+            </div>
+          </div>
+          <div id="merkle-tx-list" class="merkle-tx-list"></div>
+          <div style="padding:0 1rem 1rem;">
+            <button class="btn btn-primary" id="merkle-build-btn">
+              <i class="fas fa-hammer"></i> Build Merkle Tree
+            </button>
+          </div>
+        </div>
+
+        <!-- Merkle root display -->
+        <div id="merkle-root-card" class="card merkle-root-card" style="display:none;">
+          <div class="card-header">
+            <h3><i class="fas fa-crown"></i> Merkle Root</h3>
+          </div>
+          <div class="hash-output-wrap">
+            <code id="merkle-root-display" class="hash-output root-hash"></code>
+            <button class="btn-icon copy-btn" data-target="merkle-root-display" title="Copy"><i class="fas fa-copy"></i></button>
+          </div>
+          <div class="hash-meta">
+            <span><i class="fas fa-layer-group"></i> Levels: <strong id="merkle-levels">—</strong></span>
+            <span><i class="fas fa-leaf"></i> Leaves: <strong id="merkle-leaves">—</strong></span>
+            <span><i class="fas fa-clock"></i> Build time: <strong id="merkle-build-time">—</strong></span>
+          </div>
+        </div>
+
+        <!-- D3 Tree Visualization -->
+        <div id="merkle-tree-container" class="card" style="display:none;">
+          <div class="card-header">
+            <h3><i class="fas fa-sitemap"></i> Tree Visualization</h3>
+            <p class="card-hint">Click a leaf node (bottom row) to generate its Merkle proof path</p>
+          </div>
+          <div id="merkle-tree-svg" class="merkle-tree-svg"></div>
+        </div>
+
+        <!-- Proof display -->
+        <div id="merkle-proof-card" class="card" style="display:none;">
+          <div class="card-header">
+            <h3><i class="fas fa-route"></i> Merkle Proof</h3>
+          </div>
+          <div id="merkle-proof-content"></div>
+        </div>
+      </div>
+
+      <!-- ═══ BLOCKCHAIN PAGE ═══ -->
+      <div id="blockchain-page" class="page" style="display:none;">
+        <div class="page-header">
+          <h1><i class="fas fa-link"></i> Blockchain Simulation</h1>
+          <p class="page-description">A simplified blockchain simulation connecting hashing, signatures, and Merkle trees. Create blocks, inspect their contents, and observe how tampering breaks the hash chain.</p>
+        </div>
+
+        <div class="info-banner warning">
+          <h4><i class="fas fa-info-circle"></i> Simulation Notice</h4>
+          <p>This is an <strong>educational simulation</strong>, not a live Bitcoin or Ethereum network. It demonstrates the core data structure and integrity principles that real blockchains use.</p>
+        </div>
+
+        <div class="blockchain-controls card">
+          <div class="card-header">
+            <h3><i class="fas fa-tools"></i> Controls</h3>
+          </div>
+          <div class="card-body">
+            <button class="btn btn-primary" id="create-block-btn">
+              <i class="fas fa-plus-circle"></i> Create New Block
+            </button>
+            <button class="btn btn-outline" id="verify-chain-btn">
+              <i class="fas fa-check-double"></i> Verify Chain Integrity
+            </button>
+            <button class="btn btn-outline" id="refresh-chain-btn" title="Reload blockchain and clear verification status">
+              <i class="fas fa-sync"></i> Refresh
+            </button>
+            <button class="btn btn-outline" id="reset-chain-btn" title="Reset blockchain to genesis state">
+              <i class="fas fa-undo"></i> Reset Chain
+            </button>
+          </div>
+          <div id="chain-status" style="display:none;"></div>
+        </div>
+
+        <!-- New block form (hidden by default) -->
+        <div id="new-block-form" class="card" style="display:none;">
+          <div class="card-header">
+            <h3><i class="fas fa-cube"></i> New Block Transactions</h3>
+            <button class="btn btn-sm btn-outline" id="cancel-block-btn"><i class="fas fa-times"></i> Cancel</button>
+          </div>
+          <div id="block-tx-inputs" class="block-tx-inputs"></div>
+          <div class="card-actions" style="padding:1rem;">
+            <button class="btn btn-sm btn-outline" id="add-block-tx-btn"><i class="fas fa-plus"></i> Add Transaction</button>
+            <button class="btn btn-primary" id="submit-block-btn"><i class="fas fa-check"></i> Create Block</button>
+          </div>
+        </div>
+
+        <!-- Chain visualization -->
+        <div id="chain-visualization" class="chain-visualization"></div>
+
+        <!-- Block detail modal -->
+        <div id="block-detail-modal" class="modal" style="display:none;">
+          <div class="modal-overlay" id="block-modal-overlay"></div>
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3><i class="fas fa-cube"></i> Block Details</h3>
+              <button class="btn-icon modal-close" id="close-block-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="block-detail-body" class="modal-body"></div>
+            <div class="modal-footer">
+              <button class="btn btn-outline btn-danger" id="tamper-block-btn">
+                <i class="fas fa-bug"></i> Tamper with Block
+              </button>
+              <button class="btn btn-outline" id="close-block-modal-footer">
+                <i class="fas fa-times"></i> Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ DASHBOARD PAGE ═══ -->
+      <div id="dashboard-page" class="page" style="display:none;">
+        <div class="page-header">
+          <h1><i class="fas fa-chart-bar"></i> Performance Dashboard</h1>
+          <p class="page-description">Metrics and analytics from your cryptographic operations. All values are calculated from actual recorded operations.</p>
+        </div>
+
+        <div id="dashboard-loading" class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i> Loading dashboard data...
+        </div>
+
+        <div id="dashboard-content" style="display:none;">
+          <!-- Summary Cards -->
+          <div class="summary-cards" id="summary-cards"></div>
+
+          <!-- Charts Row -->
+          <div class="charts-grid">
+            <div class="card chart-card">
+              <div class="card-header"><h3><i class="fas fa-chart-bar"></i> Hash Performance Comparison</h3></div>
+              <div class="chart-container"><canvas id="hash-perf-chart"></canvas></div>
+              <div id="hash-chart-empty" class="empty-chart-state" style="display:none;">
+                <i class="fas fa-chart-bar"></i>
+                <p>No hashing operations recorded yet. Use the Hashing module to generate data.</p>
+              </div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-header"><h3><i class="fas fa-chart-pie"></i> Signing &amp; Verification</h3></div>
+              <div class="chart-container"><canvas id="sign-perf-chart"></canvas></div>
+              <div id="sign-chart-empty" class="empty-chart-state" style="display:none;">
+                <i class="fas fa-signature"></i>
+                <p>No signing operations recorded yet. Use the Digital Signatures module to generate data.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Merkle & Blockchain stats -->
+          <div class="charts-grid">
+            <div class="card chart-card">
+              <div class="card-header"><h3><i class="fas fa-project-diagram"></i> Merkle Tree Performance</h3></div>
+              <div class="chart-container"><canvas id="merkle-perf-chart"></canvas></div>
+              <div id="merkle-chart-empty" class="empty-chart-state" style="display:none;">
+                <i class="fas fa-project-diagram"></i>
+                <p>No Merkle operations recorded yet. Use the Merkle Trees module to generate data.</p>
+              </div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-header"><h3><i class="fas fa-history"></i> Recent Activity</h3></div>
+              <div id="recent-activity-table" class="table-container"></div>
+              <div id="activity-empty" class="empty-chart-state" style="display:none;">
+                <i class="fas fa-history"></i>
+                <p>No activity recorded yet. Start using the modules to see operations here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ PROFILE PAGE ═══ -->
+      <div id="profile-page" class="page" style="display:none;">
+        <div class="page-header">
+          <h1><i class="fas fa-user-cog"></i> My Profile</h1>
+          <p class="page-description">Your account details and activity statistics.</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;flex-wrap:wrap;">
+
+          <!-- Account Card -->
+          <div class="card" style="grid-column:1/-1;">
+            <div class="card-header">
+              <h3><i class="fas fa-id-card"></i> Account Information</h3>
+            </div>
+            <div class="card-body" style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+              <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;flex-shrink:0;" id="profile-avatar-initials">??</div>
+              <div style="flex:1;min-width:200px;">
+                <div style="margin-bottom:1rem;">
+                  <label style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);display:block;margin-bottom:0.25rem;">Username</label>
+                  <span id="profile-username" style="font-size:1.4rem;font-weight:700;color:var(--text-heading);">—</span>
+                </div>
+                <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+                  <div>
+                    <label style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);display:block;margin-bottom:0.25rem;">Email</label>
+                    <span id="profile-email" style="color:var(--text-secondary);">—</span>
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);display:block;margin-bottom:0.25rem;">User ID</label>
+                    <span id="profile-user-id" style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.85rem;">—</span>
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);display:block;margin-bottom:0.25rem;">Member Since</label>
+                    <span id="profile-created-at" style="color:var(--text-secondary);font-size:0.88rem;">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Stats -->
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-line"></i> Your Activity</h3>
+            </div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="summary-card">
+                  <div class="card-icon blue"><i class="fas fa-hashtag"></i></div>
+                  <div class="card-info"><h4 id="profile-stat-hashes">0</h4><p>Hash Operations</p></div>
+                </div>
+                <div class="summary-card">
+                  <div class="card-icon green"><i class="fas fa-signature"></i></div>
+                  <div class="card-info"><h4 id="profile-stat-signs">0</h4><p>Sign/Verify Ops</p></div>
+                </div>
+                <div class="summary-card">
+                  <div class="card-icon purple"><i class="fas fa-project-diagram"></i></div>
+                  <div class="card-info"><h4 id="profile-stat-merkle">0</h4><p>Merkle Ops</p></div>
+                </div>
+                <div class="summary-card">
+                  <div class="card-icon orange"><i class="fas fa-cube"></i></div>
+                  <div class="card-info"><h4 id="profile-stat-blocks">0</h4><p>Blocks Created</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Change Password -->
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-lock"></i> Security</h3>
+            </div>
+            <div class="card-body">
+              <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1rem;">Update your account password. Use a strong password of at least 8 characters.</p>
+              <button class="btn btn-outline" id="change-password-btn">
+                <i class="fas fa-key"></i> Change Password
+              </button>
+
+              <div id="change-password-form" style="display:none;margin-top:1.5rem;">
+                <form id="password-change-form">
+                  <div class="form-group">
+                    <label for="current-password"><i class="fas fa-lock"></i> Current Password</label>
+                    <input type="password" id="current-password" placeholder="Enter current password" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="new-password"><i class="fas fa-lock"></i> New Password</label>
+                    <input type="password" id="new-password" placeholder="Minimum 8 characters" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="confirm-new-password"><i class="fas fa-lock"></i> Confirm New Password</label>
+                    <input type="password" id="confirm-new-password" placeholder="Repeat new password" required>
+                  </div>
+                  <div id="password-change-error" class="form-error"></div>
+                  <div id="password-change-success" style="color:var(--accent-green);font-size:0.88rem;margin-bottom:0.5rem;"></div>
+                  <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" id="save-password-btn">
+                      <i class="fas fa-save"></i> Save Password
+                    </button>
+                    <button type="button" class="btn btn-outline" id="cancel-password-btn">
+                      <i class="fas fa-times"></i> Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Application JavaScript Modules -->
+  <script src="./js/clientBackend.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/auth.js"></script>
+  <script src="./js/HashingModule.js"></script>
+  <script src="./js/SigningModule.js"></script>
+  <script src="./js/MerkleModule.js"></script>
+  <script src="./js/BlockchainModule.js"></script>
+  <script src="./js/DashboardModule.js"></script>
+  <script src="./js/ProfileModule.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
